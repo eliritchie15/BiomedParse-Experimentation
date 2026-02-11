@@ -1,0 +1,49 @@
+# 1. THE MAIN MODEL (Keeps _3D)
+_target_: src.model.biomedparse_3D.BiomedParseModel
+pixel_mean: [123.675, 116.280, 103.530]
+pixel_std: [58.395, 57.120, 57.375]
+
+# 2. THE BACKBONE
+backbone:
+  _target_: src.model.backbone.swin.D2SwinTransformer
+  name: "swin_base_patch4_window12_384"
+  drop_path_rate: 0.3
+  out_indices: [0, 1, 2, 3]
+
+# 3. THE SEGMENTATION HEAD (Removed _3D)
+sem_seg_head:
+  _target_: src.model.biomedparse.BiomedParseHead
+  in_features: ["res2", "res3", "res4", "res5"]
+  ignore_value: 255
+  num_classes: 1
+  loss_weight: 1.0
+  
+  # 4. THE PREDICTOR (Removed _3D)
+  transformer_predictor:
+    _target_: src.model.biomedparse.BiomedParseTransformerPredictor
+    hidden_dim: 256
+    num_queries: 100
+    nheads: 8
+    dropout: 0.0
+    dim_feedforward: 2048
+    enc_layers: 0
+    class_weight: 2.0
+    mask_weight: 5.0
+    dice_weight: 5.0
+    train_num_points: 12544
+    oversample_ratio: 3.0
+    importance_sample_ratio: 0.75
+    dec_layers: 6
+    pre_norm: false
+    deep_supervision: true
+    mask_classification: true
+    enforce_input_project: false
+
+# Input Settings
+input:
+  image_size: [1024, 1024]
+  min_scale: 0.1
+  max_scale: 2.0
+  format: "RGB"
+  dataset:
+    dataset_name: "BiomedParseDataset"
